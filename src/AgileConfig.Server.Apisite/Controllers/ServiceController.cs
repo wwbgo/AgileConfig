@@ -48,7 +48,7 @@ namespace AgileConfig.Server.Apisite.Controllers
                     message = "该服务已存在"
                 });
             }
-            
+
             var service = new ServiceInfo();
             service.Ip = model.Ip;
             service.Port = model.Port;
@@ -96,8 +96,8 @@ namespace AgileConfig.Server.Apisite.Controllers
                 success = true
             });
         }
- 
-        public async Task<IActionResult> Search(string serviceName, string serviceId, ServiceStatus? status, 
+
+        public async Task<IActionResult> Search(string serviceName, string serviceId, ServiceStatus? status,
             string sortField, string ascOrDesc,
             int current = 1, int pageSize = 20)
         {
@@ -125,7 +125,7 @@ namespace AgileConfig.Server.Apisite.Controllers
             }
 
             query = query.OrderByDescending(x => x.RegisterTime).ToList();
-            
+            ascOrDesc ??= "asc";
             if (sortField == "registerTime")
             {
                 if (ascOrDesc.StartsWith("asc"))
@@ -179,6 +179,6 @@ namespace AgileConfig.Server.Apisite.Controllers
                 total = count,
                 data = serviceVMs
             });
-        } 
+        }
     }
 }

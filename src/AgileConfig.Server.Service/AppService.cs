@@ -157,7 +157,7 @@ namespace AgileConfig.Server.Service
             {
                 exp = exp.And(a => a.Group == group);
             }
-
+            ascOrDesc ??= "asc";
             var apps = await _appRepository.QueryPageAsync(exp, current, pageSize, sortField,
                 ascOrDesc.StartsWith("asc") ? "ASC" : "DESC");
             var count = await _appRepository.CountAsync(exp);
@@ -230,6 +230,7 @@ namespace AgileConfig.Server.Service
 
             if (sortProperty.TryGetValue(sortField, out var propertyInfo))
             {
+                ascOrDesc ??= "asc";
                 appGroupList = ascOrDesc.StartsWith("asc")
                     ? appGroupList.OrderBy(x => propertyInfo.GetValue(x.App, null)).ToList()
                     : appGroupList.OrderByDescending(x => propertyInfo.GetValue(x.App, null)).ToList();

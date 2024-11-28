@@ -307,7 +307,7 @@ namespace AgileConfig.Server.Apisite.Controllers
             {
                 configs = configs.Where(c => c.OnlineStatus == onlineStatus).ToList();
             }
-
+            ascOrDesc ??= "asc";
             if (sortField == "createTime")
             {
                 if (ascOrDesc.StartsWith("asc"))
