@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AgileConfig.Server.Apisite.Websocket;
+﻿using AgileConfig.Server.Apisite.Websocket;
 using AgileConfig.Server.Data.Entity;
 using AgileConfig.Server.IService;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AgileConfig.Server.Apisite.Controllers
 {
@@ -21,9 +21,9 @@ namespace AgileConfig.Server.Apisite.Controllers
         private readonly IServiceInfoService _serviceInfoService;
 
         public ReportController(
-            IConfigService configService, 
-            IAppService appService, 
-            IServerNodeService serverNodeService, 
+            IConfigService configService,
+            IAppService appService,
+            IServerNodeService serverNodeService,
             IRemoteServerNodeProxy remoteServerNodeProxy,
             IServiceInfoService serviceInfoService)
         {
@@ -57,7 +57,7 @@ namespace AgileConfig.Server.Apisite.Controllers
             return Json(report);
         }
 
-        public async Task<IActionResult> SearchServerNodeClients(string address, int current, int pageSize)
+        public async Task<IActionResult> SearchServerNodeClients(string address, int current, int pageSize, string appId, string env, string name, string tag)
         {
             if (current <= 0)
             {
@@ -71,11 +71,11 @@ namespace AgileConfig.Server.Apisite.Controllers
             var nodes = await _serverNodeService.GetAllNodesAsync();
             if (string.IsNullOrEmpty(address))
             {
-                addressess.AddRange(nodes.Where(x=>x.Status == NodeStatus.Online).Select(n => n.Id.ToString()));
+                addressess.AddRange(nodes.Where(x => x.Status == NodeStatus.Online).Select(n => n.Id.ToString()));
             }
             else
             {
-                if (nodes.Any(x=>x.Status == NodeStatus.Online && x.Id.ToString().Equals(address, StringComparison.CurrentCultureIgnoreCase)))
+                if (nodes.Any(x => x.Status == NodeStatus.Online && x.Id.ToString().Equals(address, StringComparison.CurrentCultureIgnoreCase)))
                 {
                     addressess.Add(address);
                 }
@@ -90,8 +90,24 @@ namespace AgileConfig.Server.Apisite.Controllers
                     clients.AddRange(report.Infos);
                 }
             }
-
-            var page = clients.OrderBy(i => i.Address).ThenBy(i => i.Id).Skip((current - 1) * pageSize).Take(pageSize);
+            var page = clients.AsEnumerable();
+            if (!string.IsNullOrEmpty(appId))
+            {
+                page = page.Where(r => r.AppId.Contains(appId, StringComparison.OrdinalIgnoreCase));
+            }
+            if (!string.IsNullOrEmpty(env))
+            {
+                page = page.Where(r => r.Env.Equals(env, StringComparison.OrdinalIgnoreCase));
+            }
+            if (!string.IsNullOrEmpty(name))
+            {
+                page = page.Where(r => r.Name.Contains(name, StringComparison.OrdinalIgnoreCase));
+            }
+            if (!string.IsNullOrEmpty(tag))
+            {
+                page = page.Where(r => r.Tag.Contains(tag, StringComparison.OrdinalIgnoreCase));
+            }
+            page = page.OrderBy(i => i.Address).ThenBy(i => i.Id).Skip((current - 1) * pageSize).Take(pageSize);
 
             return Json(new
             {
@@ -150,7 +166,7 @@ namespace AgileConfig.Server.Apisite.Controllers
                     {
                         n = serverNode,
                         server_status = new ClientInfos
-                        { 
+                        {
                             ClientCount = 0,
                             Infos = new List<ClientInfo>()
                         }
@@ -166,7 +182,7 @@ namespace AgileConfig.Server.Apisite.Controllers
 
             return Json(result);
         }
-        
+
         public async Task<IActionResult> ServiceCount()
         {
             var services = await _serviceInfoService.GetAllServiceInfoAsync();

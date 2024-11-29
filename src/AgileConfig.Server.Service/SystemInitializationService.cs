@@ -1,14 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
-using AgileConfig.Server.Common;
+﻿using AgileConfig.Server.Common;
 using AgileConfig.Server.Data.Abstraction;
 using AgileConfig.Server.Data.Entity;
 using AgileConfig.Server.IService;
 using Microsoft.Extensions.Configuration;
+using System;
 
 namespace AgileConfig.Server.Service;
 
-public class SystemInitializationService(ISysInitRepository sysInitRepository, IConfiguration configuration):ISystemInitializationService
+public class SystemInitializationService(ISysInitRepository sysInitRepository, IConfiguration configuration) : ISystemInitializationService
 {
     /// <summary>
     /// 如果 配置文件或者环境变量没配置 JwtSetting:SecurityKey 则生成一个存库
@@ -50,9 +49,13 @@ public class SystemInitializationService(ISysInitRepository sysInitRepository, I
     public bool TryInitDefaultEnvironment()
     {
         var envArrayString = sysInitRepository.GetDefaultEnvironmentFromDb();
-        if (envArrayString == null)
+        if (string.IsNullOrEmpty(envArrayString))
         {
-            envArrayString = SystemSettings.DefaultEnvironment;
+            envArrayString = configuration["DefaultEnvironment"];
+            if (string.IsNullOrEmpty(envArrayString))
+            {
+                envArrayString = SystemSettings.DefaultEnvironment;
+            }
             var setting = new Setting
             {
                 Id = SystemSettings.DefaultEnvironmentKey,
@@ -74,7 +77,7 @@ public class SystemInitializationService(ISysInitRepository sysInitRepository, I
     private static string GenerateJwtSecretKey()
     {
         var guid1 = Guid.NewGuid().ToString("n");
-        var guid2 =  Guid.NewGuid().ToString("n");
+        var guid2 = Guid.NewGuid().ToString("n");
 
         return guid1[..19] + guid2[..19];
     }

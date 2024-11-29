@@ -10,73 +10,77 @@ import { useIntl } from 'react-intl';
 import { queryApps } from '../Apps/service';
 import { queryNodes } from '../Nodes/service';
 import { queryClients, reloadClientConfigs, clientOffline } from './service';
+import { getEnvList } from '@/utils/system';
 const { confirm } = Modal;
 
-const handleClientReload = async (client:any)=>{
+const handleClientReload = async (client: any) => {
   const intl = getIntl(getLocale());
-  const hide = message.loading(intl.formatMessage({id: 'refreshing'}));
+  const hide = message.loading(intl.formatMessage({ id: 'refreshing' }));
   try {
     const result = await reloadClientConfigs(client.address, client.id);
     hide();
     const success = result.success;
     if (success) {
-      message.success(intl.formatMessage({id: 'refresh_success'}));
+      message.success(intl.formatMessage({ id: 'refresh_success' }));
     } else {
       message.error(result.message);
     }
     return success;
   } catch (error) {
     hide();
-    message.error(intl.formatMessage({id: 'refresh_fail'}));
+    message.error(intl.formatMessage({ id: 'refresh_fail' }));
     return false;
   }
 }
 
 
-const handleClientOffline = async (client:any)=>{
+const handleClientOffline = async (client: any) => {
   const intl = getIntl(getLocale());
-  const hide = message.loading(intl.formatMessage({id: 'disconnecting'}));
+  const hide = message.loading(intl.formatMessage({ id: 'disconnecting' }));
   try {
     const result = await clientOffline(client.address, client.id);
     hide();
     const success = result.success;
     if (success) {
-      message.success(intl.formatMessage({id: 'disconnect_success'}));
+      message.success(intl.formatMessage({ id: 'disconnect_success' }));
     } else {
       message.error(result.message);
     }
     return success;
   } catch (error) {
     hide();
-    message.error(intl.formatMessage({id: 'disconnect_fail'}));
+    message.error(intl.formatMessage({ id: 'disconnect_fail' }));
     return false;
   }
 }
 
-const clients:React.FC = () => {
+const clients: React.FC = () => {
+  const envList = getEnvList();
+  const envEnums = new Map<string, string>();
+  for (let i = 0; i < envList.length; i++) {
+    envEnums.set(envList[i], envList[i]);
+  }
   const actionRef = useRef<ActionType>();
   const [appEnums, setAppEnums] = useState<any>();
   const intl = useIntl();
 
-  const getNodesForSelect = async () =>
-  {
+  const getNodesForSelect = async () => {
     const result = await queryNodes()
-    const arr:any[] = [];
-    result.data.forEach((x:{address:string})=>{
-       arr.push({
-         value: x.address,
-         label: x.address,
-       });
+    const arr: any[] = [];
+    result.data.forEach((x: { address: string }) => {
+      arr.push({
+        value: x.address,
+        label: x.address,
+      });
     });
 
     return arr;
   }
-  const getAppEnums = async () =>
-  {
+  const getAppEnums = async () => {
     const result = await queryApps({})
     const obj = {};
-    result.data?.forEach(x=>{
-      if(x) {
+    result.data?.forEach(x => {
+      if (x) {
         obj[x.id] = {
           text: x.name
         }
@@ -85,10 +89,10 @@ const clients:React.FC = () => {
 
     return obj;
   }
-  useEffect(()=>{
-    getAppEnums().then(x=> {
+  useEffect(() => {
+    getAppEnums().then(x => {
       console.log('app enums ', x);
-      setAppEnums({...x});
+      setAppEnums({ ...x });
     });
   }, []);
   const columns: ProColumns[] = [
@@ -113,12 +117,14 @@ const clients:React.FC = () => {
         id: 'pages.client.table.cols.appid'
       }),
       dataIndex: 'appId',
-      hideInSearch: true,
+      // hideInSearch: true,
     },
     {
       title: '环境',
       dataIndex: 'env',
-      hideInSearch: true,
+      valueType: 'select',
+      valueEnum: envEnums,
+      // hideInSearch: true,
     },
     {
       title: intl.formatMessage({
@@ -132,13 +138,13 @@ const clients:React.FC = () => {
         id: 'pages.client.table.cols.name'
       }),
       dataIndex: 'name',
-      hideInSearch: true,
-    },{
+      // hideInSearch: true,
+    }, {
       title: intl.formatMessage({
         id: 'pages.client.table.cols.tag'
       }),
       dataIndex: 'tag',
-      hideInSearch: true,
+      // hideInSearch: true,
     },
     {
       title: intl.formatMessage({
@@ -168,23 +174,23 @@ const clients:React.FC = () => {
         </a>,
         <AuthorizedEle judgeKey={functionKeys.Client_Disconnect}>
           <Button type="link" danger onClick={
-          ()=>{
-            const msg = intl.formatMessage({
-                          id: 'pages.client.disconnect_message'
-                        }) + `【${record.id}】`;
-            confirm({
-              icon: <ExclamationCircleOutlined />,
-              content: msg,
-              async onOk() {
-                console.log('disconnect client ' + record.id);
-                const success = await handleClientOffline(record);
-                if (success) {
-                  actionRef.current?.reload();
-                }
-              },
-              onCancel() {
-              },
-            });
+            () => {
+              const msg = intl.formatMessage({
+                id: 'pages.client.disconnect_message'
+              }) + `【${record.id}】`;
+              confirm({
+                icon: <ExclamationCircleOutlined />,
+                content: msg,
+                async onOk() {
+                  console.log('disconnect client ' + record.id);
+                  const success = await handleClientOffline(record);
+                  if (success) {
+                    actionRef.current?.reload();
+                  }
+                },
+                onCancel() {
+                },
+              });
             }}>
             {
               intl.formatMessage({
@@ -197,18 +203,18 @@ const clients:React.FC = () => {
     }
   ];
   return (
-    <PageContainer header={{ title:intl.formatMessage({id:'pages.client.header.title'}) }}>
-      <ProTable     
-      search={{
-        labelWidth: 'auto',
-      }}
-      actionRef={actionRef} 
-      options={
-        false
-      }                                                                              
+    <PageContainer header={{ title: intl.formatMessage({ id: 'pages.client.header.title' }) }}>
+      <ProTable
+        search={{
+          labelWidth: 'auto',
+        }}
+        actionRef={actionRef}
+        options={
+          false
+        }
         rowKey="id"
-        columns = {columns}
-        request = { (params, sorter, filter) => queryClients(params) }
+        columns={columns}
+        request={(params, sorter, filter) => queryClients(params)}
       />
     </PageContainer>
   );
